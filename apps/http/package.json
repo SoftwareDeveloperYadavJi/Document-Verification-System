@@ -13,15 +13,21 @@
   "description": "",
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/bcrypt": "^5.0.2",
     "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/nodemailer": "^6.4.17",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2"
   },
   "dependencies": {
     "@repo/db": "workspace:*",
+    "bcrypt": "^5.1.1",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
-    "http-status-code": "^2.1.0",
+    "http-status-codes": "^2.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.10.0",
     "zod": "^3.24.2"
   }
 }
