@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "DocVerificationSyatem",
   "private": true,
   "scripts": {
     "build": "turbo run build",
