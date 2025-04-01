@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema for Document Verification System
 
 generator client {
   provider = "prisma-client-js"
@@ -13,102 +9,331 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// User model - for all users of the system
 model User {
-  id                  Int            @id @default(autoincrement())
-  email               String         @unique
-  mobile              String?        @unique
-  name                String
+  id                  String               @id @default(uuid())
+  email               String               @unique
   password            String
-  otp                 String?
-  refreshToken        String?
-  passwordResetToken  String?
-  passwordResetExpire DateTime?
-  orgPublicKey        String?
-  twoFactorEnabled    Boolean        @default(true)
-  role                Role           @default(USER)
-  verified            Boolean        @default(false)
-  SharingLinks        SharingLinks[]
-  organizations       OrganizationMemebes[]
-  Certififate         Certififate[]
-  created             DateTime       @default(now())
-  updated             DateTime       @updatedAt
+  firstName           String?
+  lastName            String?
+  phoneNumber         String?
+  isEmailVerified     Boolean              @default(false)
+  twoFactorEnabled    Boolean              @default(false)
+  twoFactorSecret     String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  lastLoginAt         DateTime?
+  roles               UserRole[]
+  ownedDocuments      Document[]           @relation("DocumentOwner")
+  issuedDocuments     Document[]           @relation("DocumentIssuer")
+  organizationMembers OrganizationMember[]
+  documentShares      DocumentShare[]
+  auditLogs           AuditLog[]
+  passwordResets      PasswordReset[]
+  sessions            Session[]
+  notifications       Notification[]
 }
 
-model OrganizationMemebes {
-  id       Int    @id @default(autoincrement())
-  name     String
-  email    String @unique
-  password String
-  role     Role   @default(ORGANIZATION_MEMBER)
-  userId   Int
-  created  DateTime @default(now())
-  updated  DateTime @updatedAt
-  user     User     @relation(fields: [userId], references: [id])
-}
-
-model SharingLinks {
-  id       Int      @id @default(autoincrement())
-  link     String
-  expireAt DateTime
-  userId   Int
-  created  DateTime @default(now())
-  updated  DateTime @updatedAt
-  user     User     @relation(fields: [userId], references: [id])
-}
-
-
-model Certififate{
-  id        Int      @id @default(autoincrement())
-  name      String
-  matadata  String?
-  url       String
-  type      String
-  userId    Int
-  created   DateTime @default(now())
-  updated   DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-
-
-
-
-
-
+// Role enumeration
 enum Role {
-  USER
-  ADMIN
-  ORGANIZATION
-  ORGANIZATION_MEMBER
-  VARIFIER
+  SYSTEM_ADMIN
+  ORGANIZATION_ADMIN
+  ISSUER
+  VERIFIER
+  DOCUMENT_OWNER
 }
 
-enum CertififateType {
-  GRADUATION
-  POSTGRADUATION
-  DIPLOMA
-  DOCTORATE
-  ASSOCIATE_DEGREE
-  HONORARY_DEGREE
-  COURSE_COMPLETION
-  TRANSFER
-  MIGRATION
-  PROFESSIONAL
-  VOCATIONAL
-  ONLINE_COURSE
-  INTERNSHIP
-  WORKSHOP
-  SEMINAR
-  RESEARCH_PRESENTATION
-  HACKATHON
-  MERIT
-  EXCELLENCE_AWARD
-  BEST_STUDENT
-  LEADERSHIP
-  VOLUNTEER_SERVICE
-  CHARACTER
-  PROVISIONAL_DEGREE
-  BONAFIDE
-  MARKSHEET
-  ENROLLMENT
+// UserRole - junction table for users and roles
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+}
+
+// Organization model - for issuing entities
+model Organization {
+  id                   String                @id @default(uuid())
+  name                 String
+  description          String?
+  website              String?
+  email                String?
+  phoneNumber          String?
+  logoUrl              String?
+  isVerified           Boolean               @default(false)
+  verifiedAt           DateTime?
+  verifiedBy           String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  members              OrganizationMember[]
+  certificates         Certificate[]
+  documents            Document[]
+  keyPairs             KeyPair[]
+  templates            Template[]
+  verificationRequests VerificationRequest[]
+
+  @@index([isVerified])
+}
+
+// OrganizationMember - junction table for organizations and users
+model OrganizationMember {
+  id             String       @id @default(uuid())
+  organizationId String
+  userId         String
+  role           Role
+  invitedAt      DateTime     @default(now())
+  joinedAt       DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+}
+
+// Certificate model - for organizational certificates
+model Certificate {
+  id             String       @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  serialNumber   String       @unique
+  validFrom      DateTime
+  validUntil     DateTime
+  publicKey      String
+  privateKey     String
+  isRevoked      Boolean      @default(false)
+  revokedAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documents      Document[]
+
+  @@index([serialNumber])
+  @@index([isRevoked])
+}
+
+// KeyPair model - for cryptographic keys
+model KeyPair {
+  id             String       @id @default(uuid())
+  organizationId String
+  name           String
+  publicKey      String
+  privateKey     String
+  algorithm      String
+  keySize        Int
+  isActive       Boolean      @default(true)
+  activatedAt    DateTime     @default(now())
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([isActive])
+}
+
+// Document model - for all verified documents
+model Document {
+  id             String          @id @default(uuid())
+  title          String
+  description    String?
+  fileUrl        String
+  fileHash       String          @unique
+  fileType       String
+  fileSize       Int
+  issuerId       String
+  ownerId        String
+  organizationId String
+  certificateId  String?
+  templateId     String?
+  signature      String?
+  signedAt       DateTime?
+  isRevoked      Boolean         @default(false)
+  revokedAt      DateTime?
+  revokedReason  String?
+  expiresAt      DateTime?
+  metadata       Json?
+  qrCodeUrl      String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  issuer         User            @relation("DocumentIssuer", fields: [issuerId], references: [id])
+  owner          User            @relation("DocumentOwner", fields: [ownerId], references: [id])
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  certificate    Certificate?    @relation(fields: [certificateId], references: [id])
+  template       Template?       @relation(fields: [templateId], references: [id])
+  shares         DocumentShare[]
+  verifications  Verification[]
+  auditLogs      AuditLog[]      @relation("DocumentAudit")
+
+  @@index([ownerId])
+  @@index([issuerId])
+  @@index([organizationId])
+  @@index([fileHash])
+  @@index([isRevoked])
+}
+
+// Template model - for document templates
+model Template {
+  id             String       @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  content        String
+  variables      Json?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documents      Document[]
+
+  @@index([isActive])
+}
+
+// DocumentShare model - for shared document access
+model DocumentShare {
+  id          String    @id @default(uuid())
+  documentId  String
+  userId      String
+  accessToken String    @unique
+  expiresAt   DateTime?
+  isOneTime   Boolean   @default(false)
+  isUsed      Boolean   @default(false)
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([accessToken])
+  @@index([expiresAt])
+}
+
+// Verification model - for document verification records
+model Verification {
+  id           String   @id @default(uuid())
+  documentId   String
+  verifierIp   String?
+  verifierInfo Json?
+  isSuccessful Boolean
+  failReason   String?
+  verifiedAt   DateTime @default(now())
+  document     Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([verifiedAt])
+}
+
+// VerificationRequest model - for organization verification
+model VerificationRequest {
+  id             String       @id @default(uuid())
+  organizationId String
+  status         String       @default("PENDING") // PENDING, APPROVED, REJECTED
+  documents      Json? // Supporting documents
+  reviewerId     String?
+  reviewedAt     DateTime?
+  reviewNotes    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+// Session model - for user sessions
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// PasswordReset model - for password reset requests
+model PasswordReset {
+  id        String    @id @default(uuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// AuditLog model - for system audit logs
+model AuditLog {
+  id         String    @id @default(uuid())
+  userId     String?
+  documentId String?
+  action     String
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  document   Document? @relation("DocumentAudit", fields: [documentId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([documentId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// Notification model - for system notifications
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// PendingInvitation model - for invited users who haven't registered yet
+model PendingInvitation {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  documentId     String?
+  organizationId String?
+  invitedBy      String
+  token          String   @unique
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([email])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// SystemSetting model - for system-wide settings
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
 }
