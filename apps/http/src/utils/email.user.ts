@@ -5,18 +5,23 @@ export class Email {
 
     constructor() {
         this.transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: Number(process.env.EMAIL_PORT),
+            host: 'smtp.gmail.com', // Specific Gmail SMTP server
+            port: 465, // SSL port for Gmail
+            secure: true, // Use SSL
             auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD,
+                user: process.env.MAIL_USERNAME,
+                pass: process.env.MAIL_PASSWORD, // This should be an App Password for Gmail
             },
-        } as nodemailer.TransportOptions);
+            tls: {
+                rejectUnauthorized: false, // Helps avoid certificate issues
+            },
+        });
     }
 
 
     // emaile templete for password reset
     public async sendPasswordResetEmail(to: string, token: string) {
+        const APP_URL = process.env.APP_URL;
         const html = `
             <!DOCTYPE html>
 <html>
@@ -48,13 +53,13 @@ export class Email {
         </tr>
         <tr>
             <td style="text-align: center; padding: 10px 0 30px 0;">
-                <a href="${process.env.APP_URL}/reset-password?token=${token}" style="background-color: #3b82f6; color: #ffffff; text-decoration: none; padding: 14px 24px; border-radius: 6px; font-size: 16px; font-weight: 500; display: inline-block; box-shadow: 0px 4px 6px rgba(59, 130, 246, 0.25); transition: all 0.3s ease;">Reset Password</a>
+                <a href="${APP_URL}/reset-password?token=${token}" style="background-color: #3b82f6; color: #ffffff; text-decoration: none; padding: 14px 24px; border-radius: 6px; font-size: 16px; font-weight: 500; display: inline-block; box-shadow: 0px 4px 6px rgba(59, 130, 246, 0.25); transition: all 0.3s ease;">Reset Password</a>
             </td>
         </tr>
         <tr>
             <td style="color: #64748b; font-size: 14px; padding: 0 0 25px 0; border-bottom: 1px solid #eaedf3;">
                 <p style="margin: 0 0 10px 0;">If the button doesn't work, copy and paste this link into your browser:</p>
-                <p style="margin: 0; word-break: break-all;"><a href="${process.env.APP_URL}/reset-password?token=${token}" style="color: #3b82f6; text-decoration: none;">${process.env.APP_URL}/reset-password?token=${token}</a></p>
+                <p style="margin: 0; word-break: break-all;"><a href="${APP_URL}/reset-password?token=${token}" style="color: #3b82f6; text-decoration: none;">${APP_URL}/reset-password?token=${token}</a></p>
             </td>
         </tr>
         <tr>

@@ -149,4 +149,72 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 
 
+export const resetPasswordVarification = async (req: Request, res: Response) => {
+    try {
+        
+        const toker = req.query.token as string;
+        const  password = req.body.password as string;
+
+        const verifyToken = jwt.verify(toker, process.env.JWT_PASSWORD_RESET_TOKEN as string);
+
+        if (!verifyToken) {
+            res.status(StatusCodes.BAD_REQUEST).json({ message: "Invalid token" });
+            return;
+        }
+
+        const user = await prisma.passwordReset.findUnique({
+            where: {
+                //@ts-ignore
+                userId: verifyToken.userId,
+                token: toker,
+            }
+        });
+
+        if (!user) {
+            res.status(StatusCodes.BAD_REQUEST).json({ message: "Invalid token" });
+            return;
+        }
+
+        const isExpired = user.expiresAt < new Date();
+        if (isExpired) {
+            res.status(StatusCodes.BAD_REQUEST).json({ message: "Token expired" });
+            return;
+        }
+
+        const isUsed = user.usedAt ? true : false;
+        if (isUsed) {
+            res.status(StatusCodes.BAD_REQUEST).json({ message: "Token already used" });
+            return;
+        }
+
+        await prisma.passwordReset.update({
+            where: {
+                token: toker,
+            },
+            data: {
+                usedAt: true,
+            }
+        });
+
+        await prisma.user.update({
+            where: {
+                id: user.userId,
+            },
+            data: {
+                password: await bcrypt.hash(password, 10),
+            }
+        });
+
+        res.status(StatusCodes.OK).json({ message: "Password updated successfully" });
+        return;
+
+    } catch (error) {
+        console.log("Error occured while resetting password", error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
+        return;
+    }
+};
+
+
+
 
