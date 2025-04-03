@@ -60,11 +60,17 @@ model UserRole {
 model Organization {
   id                   String                @id @default(uuid())
   name                 String
-  description          String?
-  website              String?
-  email                String?
-  phoneNumber          String?
+  description          String
+  website              String
+  email                String                @unique
+  password             String
+  phoneNumber          String
   logoUrl              String?
+  address              String
+  city                 String
+  state                String
+  zipCode              String
+  country              String
   isVerified           Boolean               @default(false)
   verifiedAt           DateTime?
   verifiedBy           String?
