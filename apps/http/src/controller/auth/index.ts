@@ -216,5 +216,32 @@ export const resetPasswordVarification = async (req: Request, res: Response) => 
 };
 
 
+export const getProfile = async (req: Request, res: Response) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                //@ts-ignore
+                id: req.user.id,
+            },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                phoneNumber: true,
+                roles: {
+                    select: {
+                        role: true,
+                    },
+                },
+            }
+        }); 
 
-
+        res.status(StatusCodes.OK).json({ message: "Profile retrieved successfully", user: user });
+        return;
+    } catch (error) {
+        console.log("Error occured while getting profile", error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
+        return;
+    }
+};

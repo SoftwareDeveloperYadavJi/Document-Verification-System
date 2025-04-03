@@ -32,3 +32,29 @@ export const UserUpdateSchema = z.object({
 export const UserResetPasswordSchema = z.object({
   email: z.string().email()
 });
+
+
+export const OrganizationSchema = z.object({
+  name: z.string(),
+  password: z.string(),
+  description: z.string(),
+  logoUrl: z.string(),
+  website: z.string(),
+  phoneNumber: z.string(),
+  email: z.string().email(),
+  address: z.string(),
+  city: z.string(),
+  state: z.string(),
+  zipCode: z.string(),
+  country: z.string(),
+});
+
+const OrganizationMemberSchema = z.object({
+  userId: z.string(),
+  role: z.enum(["SYSTEM_ADMIN", "ORGANIZATION_ADMIN", "ISSUER", "VERIFIER", "DOCUMENT_OWNER"]),
+});
+
+export const OrganixationLoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});
