@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import jsonwebtoken from "jsonwebtoken";
-import { prisma } from "@repo/db/client";
 
 export const organizationAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -18,37 +17,16 @@ export const organizationAuth = async (req: Request, res: Response, next: NextFu
             return;
         }
 
-        const user = await prisma.user.findUnique({
-            where: {
-                //@ts-ignore
-                id: decodedToken.userId,
-            },
-            include: {
-                roles: true,
-            },
-        });
+        // @ts-ignore
+        req.userId = decodedToken.userId;
 
-        if (!user) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
-            return;
-        }
-
-        if (!user.roles?.[0]?.role) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
-            return;
-        }
-
-        //@ts-ignore
-        if (user.roles[0].role !== "admin") {
-            res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
-            return;
-        }
         
         next();
-        return;
+
     } catch (error) {
         console.log("Error occured while validating organization", error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
         return;
     }
 };
+

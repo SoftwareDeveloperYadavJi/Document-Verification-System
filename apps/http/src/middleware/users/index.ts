@@ -18,17 +18,8 @@ export const userAuth = async (req: Request, res: Response, next: NextFunction) 
             return;
         }
 
-        const user = await prisma.user.findUnique({
-            where: {
-                //@ts-ignore
-                id: decodedToken.userId,
-            },
-        });
-
-        if (!user) {
-            res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
-            return;
-        }
+        //@ts-ignore
+        req.user = decodedToken.userId;
 
         next();
         return;

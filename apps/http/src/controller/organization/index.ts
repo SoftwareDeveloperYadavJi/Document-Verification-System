@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import jsonswebtoken from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { OrganixationLoginSchema, OrganizationSchema } from "../../types";
+import { generateKeyPairSync , createSign } from "crypto"
 
 export const Organizationregister = async (req : Request, res : Response) => {
     try {
@@ -108,4 +109,8 @@ export const organizationLogin = async (req : Request, res : Response) => {
         return;
     }
 };
+
+
+
+
 
