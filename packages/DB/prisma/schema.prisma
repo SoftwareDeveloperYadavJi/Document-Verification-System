@@ -91,6 +91,9 @@ model OrganizationMember {
   id             String       @id @default(uuid())
   organizationId String
   userId         String
+  email          String
+  password       String
+  pin            String?
   role           Role
   invitedAt      DateTime     @default(now())
   joinedAt       DateTime?
