@@ -49,8 +49,10 @@ export const OrganizationSchema = z.object({
   country: z.string(),
 });
 
-const OrganizationMemberSchema = z.object({
-  userId: z.string(),
+export const OrganizationMemberSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),
+  pin: z.string().optional(),
   role: z.enum(["SYSTEM_ADMIN", "ORGANIZATION_ADMIN", "ISSUER", "VERIFIER", "DOCUMENT_OWNER"]),
 });
 
@@ -58,3 +60,4 @@ export const OrganixationLoginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
 });
+

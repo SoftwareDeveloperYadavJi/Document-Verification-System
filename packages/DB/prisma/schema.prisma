@@ -11,28 +11,27 @@ datasource db {
 
 // User model - for all users of the system
 model User {
-  id                  String               @id @default(uuid())
-  email               String               @unique
-  password            String
-  firstName           String?
-  lastName            String?
-  phoneNumber         String?
-  otp                 String?
-  isEmailVerified     Boolean              @default(false)
-  twoFactorEnabled    Boolean              @default(false)
-  twoFactorSecret     String?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  lastLoginAt         DateTime?
-  roles               UserRole[]
-  ownedDocuments      Document[]           @relation("DocumentOwner")
-  issuedDocuments     Document[]           @relation("DocumentIssuer")
-  organizationMembers OrganizationMember[]
-  documentShares      DocumentShare[]
-  auditLogs           AuditLog[]
-  passwordResets      PasswordReset[]
-  sessions            Session[]
-  notifications       Notification[]
+  id               String          @id @default(uuid())
+  email            String          @unique
+  password         String
+  firstName        String?
+  lastName         String?
+  phoneNumber      String?
+  otp              String?
+  isEmailVerified  Boolean         @default(false)
+  twoFactorEnabled Boolean         @default(false)
+  twoFactorSecret  String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  lastLoginAt      DateTime?
+  roles            UserRole[]
+  ownedDocuments   Document[]      @relation("DocumentOwner")
+  issuedDocuments  Document[]      @relation("DocumentIssuer")
+  documentShares   DocumentShare[]
+  auditLogs        AuditLog[]
+  passwordResets   PasswordReset[]
+  sessions         Session[]
+  notifications    Notification[]
 }
 
 // Role enumeration
@@ -90,9 +89,10 @@ model Organization {
 model OrganizationMember {
   id             String       @id @default(uuid())
   organizationId String
-  userId         String
-  email          String
+  name           String
+  email          String       @unique
   password       String
+  token          String?       
   pin            String?
   role           Role
   invitedAt      DateTime     @default(now())
@@ -100,9 +100,7 @@ model OrganizationMember {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([organizationId, userId])
 }
 
 // Certificate model - for organizational certificates
@@ -272,13 +270,13 @@ model Session {
 
 // PasswordReset model - for password reset requests
 model PasswordReset {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   userId    String
-  token     String    @unique
+  token     String   @unique
   expiresAt DateTime
-  usedAt    Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usedAt    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([expiresAt])

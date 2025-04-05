@@ -3,8 +3,9 @@ import { prisma } from "@repo/db/client";
 import { StatusCodes } from "http-status-codes";
 import jsonswebtoken from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { OrganixationLoginSchema, OrganizationSchema } from "../../types";
-import { generateKeyPairSync , createSign } from "crypto"
+import { OrganixationLoginSchema, OrganizationMemberSchema, OrganizationSchema } from "../../types";
+import { Email } from "../../utils/email.user";
+import { generateRandomPasswordWithLength } from "../../utils/randomPass";
 
 export const Organizationregister = async (req : Request, res : Response) => {
     try {
@@ -113,4 +114,136 @@ export const organizationLogin = async (req : Request, res : Response) => {
 
 
 
+export const addMemberToOrganization = async (req : Request, res : Response) => {
+    try {
+        //@ts-ignore
+        const organization = req.userId;
+        const organizationData = OrganizationMemberSchema.safeParse(req.body);
 
+        if (!organizationData.success) {
+            console.log("Invalid organization data", organizationData.error);
+             res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid organization data" });
+             return;
+        }
+
+        const user = await prisma.organization.findUnique({
+            where: {
+                id: organization,
+            },
+        });
+
+
+        if (!user) {
+             res.status(StatusCodes.BAD_REQUEST).json({ error: "Organization not found" });
+             return;
+        }
+
+        const organizationMember = await prisma.organizationMember.findUnique({
+            where: {
+                email: organizationData.data.email,
+            },
+        });
+        
+
+
+        if (organizationMember) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Member already exists" });
+            return;
+        }
+        
+
+        const genneratetPassword = generateRandomPasswordWithLength(10);
+        const token = jsonswebtoken.sign({ userId: user.id , email: organizationData.data.email }, process.env.JWT_SECRET as string, {
+            expiresIn: "1h",
+        });
+
+        const newMember = await prisma.organizationMember.create({
+            data: {
+                organizationId: organization,
+                email: organizationData.data.email,
+                name: organizationData.data.name,
+                password: bcrypt.hashSync(genneratetPassword, 10),
+                pin: organizationData.data.pin,
+                token: token,
+                role: organizationData.data.role,
+                invitedAt: new Date(),
+                joinedAt: new Date(),
+            },
+            select: {
+                email: true,
+                pin: true,
+                role: true,
+                invitedAt: true,
+                joinedAt: true,
+            }
+        });
+
+        const email = new Email();
+        await email.addingMemberToOrganization(organizationData.data.email, token ,  genneratetPassword, organizationData.data.name);
+
+        res.status(StatusCodes.CREATED).json({ message: "Member added successfully", member: newMember });
+        return;
+    } catch (error) {
+        console.log("Error occured while adding member to organization", error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
+        return;
+    }
+};
+
+
+
+
+export const changeMemberPassword = async (req:Request , res: Response)=>{
+
+    try {
+      
+        const token = req.query.token as string;
+        const password = req.body.password as string;
+
+        const verificationToken = jsonswebtoken.verify(token, process.env.JWT_SECRET as string);
+
+        if (!verificationToken) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Invalid token" });
+            return;
+        }
+
+        const organizationMember = await prisma.organizationMember.findFirst({
+            where: {
+                token: token,
+                //@ts-ignore
+                email: verificationToken.email,
+            },
+        });
+        
+        if (!organizationMember) {
+            res.status(StatusCodes.BAD_REQUEST).json({ error: "Organization member not found" });
+            return;
+        }
+   
+        
+        const updateMember = await prisma.organizationMember.update({
+            where: {
+                token: token,
+                //@ts-ignore
+                email: verificationToken.email,
+            },
+            data: {
+                password: bcrypt.hashSync(password, 10),
+                token: null,
+            },
+            select: {
+                email: true,
+                pin: true,
+                role: true,
+                invitedAt: true,
+                joinedAt: true,
+            }
+        });
+        res.status(StatusCodes.OK).json({ message: "Password changed successfully", member: updateMember });
+        
+    } catch (error) {
+        
+        console.log("Error occurred while changing member password", error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
+    }
+}
