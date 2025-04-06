@@ -61,3 +61,29 @@ export const OrganixationLoginSchema = z.object({
   password: z.string(),
 });
 
+export const OrganizationUpdateSchema = z.object({
+  name: z.string().optional(),
+  password: z.string().optional(),
+  description: z.string().optional(),
+  logoUrl: z.string().optional(),
+  website: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  email: z.string().email().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string().optional(),
+});
+
+export const createTemplateSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  startDate: z.string().transform((val) => new Date(val))
+});
+
+export const documentSchemaToSing = z.object({
+  // this Hava to done by today morning and by addning QR singturte the informating and get in the userDashBored 
+  //  and we have to perform implement the some kind of statrgy to verfiry the doc and decide a  pricec modle and the API request 
+  
+})

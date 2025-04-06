@@ -160,7 +160,7 @@ model Document {
   certificateId  String?
   templateId     String?
   signature      String?
-  signedAt       DateTime?
+  signedAt       DateTime       @default(now())
   isRevoked      Boolean         @default(false)
   revokedAt      DateTime?
   revokedReason  String?
@@ -189,16 +189,16 @@ model Document {
 model Template {
   id             String       @id @default(uuid())
   organizationId String
-  name           String
+  name           String        
   description    String?
-  content        String
-  variables      Json?
+  startDate      DateTime?
   isActive       Boolean      @default(true)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   documents      Document[]
 
+  @@unique([name, organizationId])
   @@index([isActive])
 }
 

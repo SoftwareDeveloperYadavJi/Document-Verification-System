@@ -1,0 +1,317 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id String [pk]
+  email String [unique, not null]
+  password String [not null]
+  firstName String
+  lastName String
+  phoneNumber String
+  otp String
+  isEmailVerified Boolean [not null, default: false]
+  twoFactorEnabled Boolean [not null, default: false]
+  twoFactorSecret String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  lastLoginAt DateTime
+  roles UserRole [not null]
+  ownedDocuments Document [not null]
+  issuedDocuments Document [not null]
+  documentShares DocumentShare [not null]
+  auditLogs AuditLog [not null]
+  passwordResets PasswordReset [not null]
+  sessions Session [not null]
+  notifications Notification [not null]
+}
+
+Table UserRole {
+  id String [pk]
+  userId String [not null]
+  role Role [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  user User [not null]
+
+  indexes {
+    (userId, role) [unique]
+  }
+}
+
+Table Organization {
+  id String [pk]
+  name String [not null]
+  description String [not null]
+  website String [not null]
+  email String [unique, not null]
+  password String [not null]
+  phoneNumber String [not null]
+  logoUrl String
+  address String [not null]
+  city String [not null]
+  state String [not null]
+  zipCode String [not null]
+  country String [not null]
+  isVerified Boolean [not null, default: false]
+  verifiedAt DateTime
+  verifiedBy String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  members OrganizationMember [not null]
+  certificates Certificate [not null]
+  documents Document [not null]
+  keyPairs KeyPair [not null]
+  templates Template [not null]
+  verificationRequests VerificationRequest [not null]
+}
+
+Table OrganizationMember {
+  id String [pk]
+  organizationId String [not null]
+  name String [not null]
+  email String [unique, not null]
+  password String [not null]
+  token String
+  pin String
+  role Role [not null]
+  invitedAt DateTime [default: `now()`, not null]
+  joinedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  organization Organization [not null]
+}
+
+Table Certificate {
+  id String [pk]
+  organizationId String [not null]
+  name String [not null]
+  description String
+  serialNumber String [unique, not null]
+  validFrom DateTime [not null]
+  validUntil DateTime [not null]
+  publicKey String [not null]
+  privateKey String [not null]
+  isRevoked Boolean [not null, default: false]
+  revokedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  organization Organization [not null]
+  documents Document [not null]
+}
+
+Table KeyPair {
+  id String [pk]
+  organizationId String [not null]
+  name String [not null]
+  publicKey String [not null]
+  privateKey String [not null]
+  algorithm String [not null]
+  keySize Int [not null]
+  isActive Boolean [not null, default: true]
+  activatedAt DateTime [default: `now()`, not null]
+  expiresAt DateTime
+  revokedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  organization Organization [not null]
+}
+
+Table Document {
+  id String [pk]
+  title String [not null]
+  description String
+  fileUrl String [not null]
+  fileHash String [unique, not null]
+  fileType String [not null]
+  fileSize Int [not null]
+  issuerId String [not null]
+  ownerId String [not null]
+  organizationId String [not null]
+  certificateId String
+  templateId String
+  signature String
+  signedAt DateTime [default: `now()`, not null]
+  isRevoked Boolean [not null, default: false]
+  revokedAt DateTime
+  revokedReason String
+  expiresAt DateTime
+  metadata Json
+  qrCodeUrl String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  issuer User [not null]
+  owner User [not null]
+  organization Organization [not null]
+  certificate Certificate
+  template Template
+  shares DocumentShare [not null]
+  verifications Verification [not null]
+  auditLogs AuditLog [not null]
+}
+
+Table Template {
+  id String [pk]
+  organizationId String [not null]
+  name String [not null]
+  description String
+  content String [not null]
+  variables Json
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  organization Organization [not null]
+  documents Document [not null]
+}
+
+Table DocumentShare {
+  id String [pk]
+  documentId String [not null]
+  userId String [not null]
+  accessToken String [unique, not null]
+  expiresAt DateTime
+  isOneTime Boolean [not null, default: false]
+  isUsed Boolean [not null, default: false]
+  usedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  document Document [not null]
+  user User [not null]
+}
+
+Table Verification {
+  id String [pk]
+  documentId String [not null]
+  verifierIp String
+  verifierInfo Json
+  isSuccessful Boolean [not null]
+  failReason String
+  verifiedAt DateTime [default: `now()`, not null]
+  document Document [not null]
+}
+
+Table VerificationRequest {
+  id String [pk]
+  organizationId String [not null]
+  status String [not null, default: 'PENDING']
+  documents Json
+  reviewerId String
+  reviewedAt DateTime
+  reviewNotes String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  organization Organization [not null]
+}
+
+Table Session {
+  id String [pk]
+  userId String [not null]
+  token String [unique, not null]
+  ipAddress String
+  userAgent String
+  expiresAt DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  user User [not null]
+}
+
+Table PasswordReset {
+  id String [pk]
+  userId String [not null]
+  token String [unique, not null]
+  expiresAt DateTime [not null]
+  usedAt Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  user User [not null]
+}
+
+Table AuditLog {
+  id String [pk]
+  userId String
+  documentId String
+  action String [not null]
+  details Json
+  ipAddress String
+  userAgent String
+  createdAt DateTime [default: `now()`, not null]
+  user User
+  document Document
+}
+
+Table Notification {
+  id String [pk]
+  userId String [not null]
+  title String [not null]
+  message String [not null]
+  type String [not null]
+  isRead Boolean [not null, default: false]
+  readAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  user User [not null]
+}
+
+Table PendingInvitation {
+  id String [pk]
+  email String [unique, not null]
+  documentId String
+  organizationId String
+  invitedBy String [not null]
+  token String [unique, not null]
+  expiresAt DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table SystemSetting {
+  id String [pk]
+  key String [unique, not null]
+  value String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Enum Role {
+  SYSTEM_ADMIN
+  ORGANIZATION_ADMIN
+  ISSUER
+  VERIFIER
+  DOCUMENT_OWNER
+}
+
+Ref: UserRole.userId > User.id [delete: Cascade]
+
+Ref: OrganizationMember.organizationId > Organization.id [delete: Cascade]
+
+Ref: Certificate.organizationId > Organization.id [delete: Cascade]
+
+Ref: KeyPair.organizationId > Organization.id [delete: Cascade]
+
+Ref: Document.issuerId > User.id
+
+Ref: Document.ownerId > User.id
+
+Ref: Document.organizationId > Organization.id
+
+Ref: Document.certificateId > Certificate.id
+
+Ref: Document.templateId > Template.id
+
+Ref: Template.organizationId > Organization.id [delete: Cascade]
+
+Ref: DocumentShare.documentId > Document.id [delete: Cascade]
+
+Ref: DocumentShare.userId > User.id
+
+Ref: Verification.documentId > Document.id [delete: Cascade]
+
+Ref: VerificationRequest.organizationId > Organization.id [delete: Cascade]
+
+Ref: Session.userId > User.id [delete: Cascade]
+
+Ref: PasswordReset.userId > User.id [delete: Cascade]
+
+Ref: AuditLog.userId > User.id [delete: Set Null]
+
+Ref: AuditLog.documentId > Document.id [delete: Set Null]
+
+Ref: Notification.userId > User.id [delete: Cascade]
