@@ -1,15 +1,21 @@
 import express from "express";
 import dotenv from "dotenv";
 import { router } from "./routes/v1";
+import errorHandler  from "./utils/errorhandlling";
 
 dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => {
-    res.send("Hello World!");
+app.get("/healthcheck", (req, res) => {
+    res.send("OK");
 });
+
+
+app.use(errorHandler);
+
+
 
 app.use('/api/v1', router);
 
