@@ -1,9 +1,14 @@
 import { Router } from "express";
-import { organizationKeyGeneration, templeteCreation, getAllTemplets } from "../../../controller/issuers/index";
-import { organizationAuth } from "../../../middleware/organization/index";
-export const issuersRouter : Router = Router();
+import {
+    getAllTemplets,
+    organizationKeyGeneration,
+    templeteCreation
+} from "../../../controller/issuers";
+import { organizationAuth } from "../../../middleware/organization";
 
+export const issuersRouter: Router = Router();
 
-issuersRouter.post("/keypair", organizationAuth, organizationKeyGeneration);
-issuersRouter.post('/createtemplete', organizationAuth , templeteCreation);
-issuersRouter.get('/templets', organizationAuth , getAllTemplets);
+// Issuer related routes
+issuersRouter.post("/generate-keys", organizationAuth, organizationKeyGeneration);
+issuersRouter.post("/template", organizationAuth, templeteCreation);
+issuersRouter.get("/templates", organizationAuth, getAllTemplets);

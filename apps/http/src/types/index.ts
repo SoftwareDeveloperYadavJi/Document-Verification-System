@@ -16,7 +16,7 @@ export const UserLoginSchema = z.object({
 });
 
 export const UserOtpSchema = z.object({
-    otp: z.string(),
+  otp: z.string(),
 });
 
 
@@ -56,7 +56,7 @@ export const OrganizationMemberSchema = z.object({
   role: z.enum(["SYSTEM_ADMIN", "ORGANIZATION_ADMIN", "ISSUER", "VERIFIER", "DOCUMENT_OWNER"]),
 });
 
-export const OrganixationLoginSchema = z.object({
+export const OrganizationLoginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
 });
@@ -85,5 +85,5 @@ export const createTemplateSchema = z.object({
 export const documentSchemaToSing = z.object({
   // this Hava to done by today morning and by addning QR singturte the informating and get in the userDashBored 
   //  and we have to perform implement the some kind of statrgy to verfiry the doc and decide a  pricec modle and the API request 
-  
+
 });

@@ -1,12 +1,21 @@
 import { Router } from "express";
+import {
+    forgotPassword,
+    login,
+    logout,
+    refreshToken,
+    register,
+    resetPassword,
+    verifyEmail
+} from "../../../controller/auth";
 
-export const authRouter : Router = Router();
-import { register, login, resetPassword , resetPasswordVarification, getProfile } from "../../../controller/auth";
-import { userAuth } from "../../../middleware/users";
+export const authRouter: Router = Router();
 
-
-authRouter.post('/register', register);
-authRouter.post('/login', login);
-authRouter.post('/reset-password', resetPassword);
-authRouter.post('/reset-password-verification', resetPasswordVarification);
-authRouter.get('/me', userAuth, getProfile);
+// User authentication routes
+authRouter.post("/login", login);
+authRouter.post("/register", register);
+authRouter.post("/verify-email", verifyEmail);
+authRouter.post("/refresh-token", refreshToken);
+authRouter.post("/forgot-password", forgotPassword);
+authRouter.post("/reset-password", resetPassword);
+authRouter.post("/logout", logout);

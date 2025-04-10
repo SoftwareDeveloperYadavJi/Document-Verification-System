@@ -1,27 +1,66 @@
 // src/utils/logger.ts
-import { createLogger, format, transports } from 'winston';
+import fs from 'fs';
+import path from 'path';
+import winston from 'winston';
 
-const { combine, timestamp, printf, colorize, errors } = format;
+// Create logs directory if it doesn't exist
+const logDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+}
 
-const customFormat = printf(({ level, message, timestamp, stack }) => {
-    return `${timestamp} [${level}]: ${stack || message}`;
-});
-
-const logger = createLogger({
-    level: 'info',
-    format: combine(
-        colorize(),
-        timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        errors({ stack: true }),
-        customFormat
+// Configure logger
+export const logger = winston.createLogger({
+    level: process.env.LOG_LEVEL || 'info',
+    format: winston.format.combine(
+        winston.format.timestamp({
+            format: 'YYYY-MM-DD HH:mm:ss'
+        }),
+        winston.format.errors({ stack: true }),
+        winston.format.splat(),
+        winston.format.json()
     ),
+    defaultMeta: { service: 'doc-verification-api' },
     transports: [
-        new transports.Console(),
-        new transports.File({ filename: 'logs/error.log', level: 'error' }),
-        new transports.File({ filename: 'logs/combined.log' }),
-        new transports.File({ filename: 'logs/info.log', level: 'info' })
+        // Write logs to console
+        new winston.transports.Console({
+            format: winston.format.combine(
+                winston.format.colorize(),
+                winston.format.printf(
+                    info => `${info.timestamp} ${info.level}: ${info.message} ${info.stack || ''}`
+                )
+            )
+        }),
+        // Write errors to error.log
+        new winston.transports.File({
+            filename: path.join(logDir, 'error.log'),
+            level: 'error'
+        }),
+        // Write all logs to combined.log
+        new winston.transports.File({
+            filename: path.join(logDir, 'combined.log')
+        }),
     ],
-    exitOnError: false,
+    exceptionHandlers: [
+        new winston.transports.File({
+            filename: path.join(logDir, 'exceptions.log')
+        })
+    ],
+    rejectionHandlers: [
+        new winston.transports.File({
+            filename: path.join(logDir, 'rejections.log')
+        })
+    ]
 });
+
+// If in development, also log to the console with simpler format
+if (process.env.NODE_ENV !== 'production') {
+    logger.add(new winston.transports.Console({
+        format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple()
+        )
+    }));
+}
 
 export default logger;
